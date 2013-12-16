@@ -1,25 +1,27 @@
 __author__ = 'alex'
 import math
 from random import randint
+import copy
 
 class Board(object):
 	def __init__(self, x, y, level=1):
+		"""
+
+
+		"""
 		self.x, self.y = x, y
 		self.level = level
 
-		self.bombs = set()
-		self.numbers = dict()
-		self.unclicked_squares = set()
+		self.bombs = self.gen_bombs(x, y, level)
+		self.numbers, self.unclicked_squares = self.gen_numbers(x, y, self.bombs)
+		self.blank_board = copy.copy(self.unclicked_squares)
 		self.flags = set()
 
-		self.bombs |= self.gen_bombs(x, y, level)
-		self.numbers, self.unclicked_squares = self.gen_numbers(x, y, self.bombs)
-		_, self._blank_board = self.gen_numbers(x, y, self.bombs)
-
 		self.time = 0
+		self.round = 0
 		self.start = False
 		self.win = False
-		self.round = 0
+
 
 	def _pop_consec_zero_sqs(self, point):
 		x, y = point
@@ -37,7 +39,7 @@ class Board(object):
 
 
 	def _num_of_bombs(self, x, y, level):
-		return math.ceil(x*y /(2 + (10 / level)))
+		return math.ceil(x*y /(5 + (10 / level)))
 
 
 	def gen_bombs(self, x=1, y=1, level=1):
@@ -48,9 +50,7 @@ class Board(object):
 		while count != num:
 			point = randint(0, x), randint(0, y)
 
-			if point in points:
-				continue
-			else:
+			if point not in points:
 				points.add(point)
 				count += 1
 
@@ -58,7 +58,20 @@ class Board(object):
 
 	def gen_neighbors(self, point):
 		x, y = point
-		nearby = {(x + x_i, y + y_i) for x_i in range(-1, 2) for y_i in range(-1, 2)}
+		xstart, xend = -1, 2
+		ystart, yend = -1, 2
+
+		if x <= 0:
+			xstart = 0
+		elif x >= self.x:
+			xend = 1
+
+		if y <= 0:
+			ystart = 0
+		elif y >= self.y:
+			yend = 1
+
+		nearby = {(x + x_i, y + y_i) for x_i in range(xstart, xend) for y_i in range(ystart, yend)}
 		nearby.remove(point)
 
 		return nearby
@@ -96,17 +109,33 @@ class Board(object):
 		else:
 			self._pop_consec_zero_sqs(point)
 
+
+	def set_flag(self, pt):
+		if pt in self.flags:
+			self.flags.remove(pt)
+			self.unclicked_squares.add(pt)
+			return True
+
+		elif pt in self.unclicked_squares:
+			self.flags.add(pt)
+
+			used_all_flags = len(self.flags) == len(self.bombs)
+
+			if used_all_flags and (self.flags == self.bombs):
+				self.end_game(True)
+
+			return False
+
 	def start_game(self):
 		if not self.start:
 			self.start = True
+			self.win = False
 
 		self.round += 1
 
 
 	def end_game(self, win=False):
-		if win:
-			self.win = True
-
+		self.win = win
 		self.unclicked_squares = set()
 		self.start = False
 

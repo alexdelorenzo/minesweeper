@@ -8,22 +8,13 @@ from math import floor
 
 cursor = None
 
-xi, yi = 15,15
+xi, yi = 30, 30
 x, y = xi, yi
-lvl = 1
+lvl = 5
 starts = True
-mines = Board(xi, yi)
+mines = Board(xi, yi, lvl)
+flag_mode = False
 
-
-colors_rgb = \
-	(7,126,138, 255), \
-	(6, 84, 127, 255), \
-	(0,115,94, 255), \
-	(7,138,77, 255), \
-	(6,127,37, 255)
-
-colors_dec = [tuple(rgb/255 for rgb in color) for color in colors_rgb]
-b1, b2, b3, b4, b5 = colors_rgb
 
 brd = {(_x,_y) for _x in range(x) for _y in range(y)}
 
@@ -46,7 +37,7 @@ set_live_color = pyglet.gl.glColor3f
 gl_draw_sq = pyglet.graphics.draw_indexed
 
 window = pyglet.window.Window(width=(x+1)*scale, height=(y+1)*scale)
-four, gl_flag, indices = 4, 'v2i', (0, 1, 2, 0, 2, 3)
+four, gl_flag, indices = 4, 'v2i2', (0, 1, 2, 0, 2, 3)
 vertices = 0,0, x*scale+scale,0, x*scale+scale,y*scale+scale, 0,y*scale+scale
 set_live_color(*unclicked_sq)
 gl_draw_sq(four, pyglet.gl.GL_TRIANGLES, indices, (gl_flag, vertices))
@@ -65,15 +56,51 @@ def draw_text(label="Txt", point=(10,10), size=1, color=black):
 	label.draw()
 
 
-def process_board(board, start):
-	set_live_color(*zero_sq)
-	gl_draw_sq(four, pyglet.gl.GL_TRIANGLES, indices, (gl_flag, vertices))
 
+def process_board(board, start):
+	#set_live_color(*zero_sq)
+	#gl_draw_sq(four, pyglet.gl.GL_TRIANGLES, indices, (gl_flag, vertices))
+
+	these_nums, these_zeros = get_visible_sqs(board)
+
+	_draw_zeros(board, these_zeros)
+	_draw_nums(board, these_nums)
+	_draw_flags(board)
+
+	if not board.unclicked_squares:
+		_draw_bombs(board)
+
+
+
+def _draw_nums(board, pts):
+	for pt in pts:
+		number = board.numbers[pt]
+		draw_square(pt, scale, number_sq)
+		draw_text(str(number), pt, size=8, color=black)
+		board.numbers.pop(pt)
+
+def _draw_zeros(board, pts):
+	for pt in pts:
+		draw_square(pt, scale, zero_sq)
+		board.blank_board.remove(pt)
+
+def _draw_bombs(board):
 	for bomb in board.bombs:
 		draw_square(bomb, scale, bomb_sq)
 
+def _draw_flags(board):
+	for flag in board.flags:
+		draw_square(flag, scale, flag_sq)
 
+def _draw_unclicked(board):
+	for sq in board.unclicked_squares:
+		draw_square(sq, scale, unclicked_sq)
 
+def get_visible_sqs(board):
+	draw_these_nums = board.numbers.keys() - board.unclicked_squares
+	draw_these_zeros = board.blank_board - board.unclicked_squares
+
+	return draw_these_nums, draw_these_zeros
 
 def update_title(dt, board):
 	if not board.start:
@@ -90,6 +117,7 @@ def update_title(dt, board):
 def draw_clicks(board):
 	if not board.round:
 		board.start_game()
+		_draw_unclicked(board)
 
 	process_board(mines, starts)
 
@@ -98,27 +126,6 @@ def draw_clicks(board):
 				window.set_caption(":) You win. Time: " + str(board.time))
 		else:
 				window.set_caption(":( You lose.")
-
-	for sq in board.unclicked_squares:
-		draw_square(sq, scale, unclicked_sq)
-
-	for flag in mines.flags:
-		draw_square(flag, scale, flag_sq)
-
-
-def _draw_nums(board, pts):
-	for pt in pts:
-		num = board.numbers[pt]
-		
-		draw_square(pt, scale, number_sq)
-		draw_text(str(number), pt, size=8, color=black)
-
-def get_visible_sqs(board):
-	draw_these_nums = board.numbers - board.unclicked_squares
-	draw_these_zeros = board._blank_board - board.unclicked_squares
-
-	return draw_these_nums, draw_these_zeros
-
 
 
 @window.event
@@ -130,21 +137,29 @@ def on_mouse_motion(x, y, dx, dy):
 def on_draw(*args): pass
 
 @window.event
+def on_key_press(symbol, modifiers, flag_mode=flag_mode):
+	if symbol == pyglet.window.key.F:
+		flag_mode = False if flag_mode else True
+
+@window.event
 def on_mouse_press(x, y, button, modifiers, board=mines):
 	point = floor(x / scale), floor(y / scale)
 
-	if button == 1:
+	if flag_mode and button == 1:
+		start_button = 4
+
+	if button == 4:
 		if point not in mines.flags:
 			mines.select_sq(point)
-	elif button == 4:
-		if point in mines.flags:
-			mines.flags.remove(point)
-		else:
-			if point in mines.unclicked_squares:
-				mines.flags.add(point)
+
+	elif button == 1:
+		truth = mines.set_flag(point)
+		if truth:
+			draw_square(point, scale, unclicked_sq)
 
 	elif button == 2:
 		mines.__init__(xi, xi, lvl)
+
 
 	draw_clicks(mines)
 
