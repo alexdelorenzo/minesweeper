@@ -92,7 +92,7 @@ class Cases(object):
 		if not has_edge:
 			return False
 
-		
+
 
 
 
