@@ -1,6 +1,3 @@
-__author__ = 'alex'
-
-
 import pyglet
 from random import random as r
 from board import Board
