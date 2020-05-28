@@ -29,7 +29,7 @@ class Cases(object):
 		mapped_neighbors = {neighbor: pt  for neighbor in neighbors}
 		pass
 
-	def _get_edges(self, board, pt, neighbors=None)
+	def _get_edges(self, board, pt, neighbors=None):
 		if not neighbors:
 			neighbors = board.gen_neighbors(pt)
 
