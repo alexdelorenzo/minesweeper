@@ -5,10 +5,6 @@ import copy
 
 class Board(object):
 	def __init__(self, x, y, level=1):
-		"""
-
-
-		"""
 		self.x, self.y = x, y
 		self.level = level
 
