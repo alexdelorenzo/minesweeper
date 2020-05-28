@@ -1,18 +1,12 @@
-![screenshot](http://i.imgur.com/RSXtutY.png  "beep")
+![Screenshot of game](http://i.imgur.com/RSXtutY.png  "Board")
 
-
-
-minesqeeper
+minesweeper
 ===========
 
-minesweeper game + shoddily put together gui + a board solver
+*Update 2020*: I made this 8 years ago and it's bad. 
 
+It's a minesweeper game made with pyglet, and there's also a solver.
 
-board.py + solver.py are examples of okay code
+## License
 
-
-mines_pyglet.py on the other hand... shield your eyes.
-
-##License
-
-gplv3
+AGPLv3
